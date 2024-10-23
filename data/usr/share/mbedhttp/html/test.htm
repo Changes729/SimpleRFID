@@ -1,0 +1,54 @@
+<body>
+  <p>I love my cat.</p>
+
+  <ul>
+    <li>Buy cat food</li>
+    <li>Exercise</li>
+    <li>Cheer up friend</li>
+  </ul>
+
+  <p>The end!</p>
+</body>
+<script>
+  var visible_index = 0;
+
+  function createElementFromHTML(htmlString) {
+    var div = document.createElement("div");
+    div.innerHTML = htmlString.trim();
+
+    // Change this to div.childNodes to support multiple top-level nodes.
+    return div.firstChild;
+  }
+
+  function get_blocks() {
+    return document.getElementsByClassName("block");
+  }
+
+  window.addEventListener("load", (event) => {
+    console.log("on windows load.");
+
+    var placement = document.getElementById("blockPlacement");
+
+    for (let i = 0; i < 20; ++i) {
+      var block = createElementFromHTML(`<div class="block">block ${i}</div>`);
+      block.style.display = "none";
+      placement.appendChild(block);
+    }
+    var blocks = get_blocks();
+    blocks[0].style.display = "block";
+  });
+
+  function switch_block() {
+    console.log("switch block");
+
+    var blocks = get_blocks();
+    blocks[visible_index].style.display = "none";
+
+    visible_index += 1;
+    if (visible_index == blocks.length) {
+      visible_index = 0;
+    }
+
+    blocks[visible_index].style.display = "block";
+  }
+</script>
