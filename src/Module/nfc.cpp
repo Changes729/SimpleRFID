@@ -35,13 +35,19 @@ bool nfc_init() {
   nfc.begin();
   nfc.reset();
 
-  uint8_t productVersion[2];
+  uint8_t productVersion[2]{};
   nfc.readEEprom(PRODUCT_VERSION, productVersion, sizeof(productVersion));
+#if 0
+  Serial.print(F("Product version="));
+  Serial.print(productVersion[1]);
+  Serial.print(".");
+  Serial.println(productVersion[0]);
+#endif
   if (0x00 == productVersion[1]) {
     success = false;
   } else {
     nfc.setupRF();
-
+#if 0
     uint32_t byte;
     nfc.readRegister(0x22, &byte);
     Serial.printf("0x22: 0x%X\n", byte);
@@ -56,6 +62,7 @@ bool nfc_init() {
     // nfc.writeRegisterWithAndMask(0x22, ~0x03);
     // nfc.writeRegisterWithAndMask(0x27, ~0x08);
     // nfc.readRegister(0x22, &byte);
+#endif
   }
   return success;
 }
@@ -66,8 +73,9 @@ void update_nfc() {
     log_e("Error in getInventory: ");
 
     uint32_t irqStatus = nfc.getIRQStatus();
+#if 0
     _showIRQStatus(irqStatus);
-
+#endif
     if (0 == (RX_SOF_DET_IRQ_STAT & irqStatus)) { // no card detected
       log_d("*** No card detected!");
     }

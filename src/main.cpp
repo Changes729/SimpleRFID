@@ -135,12 +135,12 @@ void loop() {
       }
     }
   } else if (rfid_device == TYPE_PN5180) {
-    String uid{};
-    if (has_uid(uid)) {
-      Serial.printf("has rfid: %s\n", uid.c_str());
-      Serial.flush();
-      log_n("send package");
-      // send_box_msg("_cobox_scene_" + uid);
+    String new_rfid{};
+    if (has_uid(new_rfid)) {
+      _latest_rfid_index = new_rfid;
+      if (!_latest_rfid_index.isEmpty()) {
+        Serial.println(_latest_rfid_index.c_str());
+      }
     }
     update_nfc();
   }
