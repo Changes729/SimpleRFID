@@ -13,6 +13,8 @@
 #include <ESPAsyncTCP.h>
 #endif
 
+#include "Module/CU500.h"
+#include "Module/nfc.h"
 #include "Web/network_settings.h"
 #include "config.h"
 #include "network_manager.h"
@@ -22,6 +24,11 @@
 /* Private namespace ---------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
+typedef enum {
+  TYPE_PN5180,
+  TYPE_CU500,
+} rfid_device_t;
+
 /* Private template ----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static unsigned long _disconnect_ts = 0;
@@ -36,8 +43,13 @@ static bool _sys_enable = true;
 static IPAddress _debug_ip{0, 0, 0, 0};
 static String _debug_ip_str = _debug_ip.toString();
 static uint32_t _debug_port = 3333;
+static String _latest_rfid_index{};
 
 /* Private class -------------------------------------------------------------*/
+static rfid_device_t rfid_device;
+static CU500::CU500_Reader rfid_reader{Serial1};
+static unsigned rfid_record{};
+
 /* Private function prototypes -----------------------------------------------*/
 static void check_network_state();
 static void send_box_msg(const String &str);
@@ -47,23 +59,29 @@ static void send_msg(const String &str, const char *server_ip, int server_port);
 /* Private class function ----------------------------------------------------*/
 void setup() {
   /** Params init */
+  log_i("init start");
   WebServer::create();
   NetworkManager::create();
 
   /** Serial init */
+  log_i("init serial");
   Serial.begin(115200);
   while (!Serial) {
   }
+  delay(1000);
 
   /** LittleFS init */
+  log_i("init littlefs");
   if (!LittleFS.begin(false, "")) {
-    Serial.println("LittleFS mount failed");
+    log_d("LittleFS mount failed");
     return;
   }
 
-  SYSTEM::init();
   init_rs_cfg();
+  SYSTEM::init();
 
+  log_i("init network");
+#if 0
   NetworkManager::instance().config_dhcpcd("/etc/dhcpcd.conf");
   NetworkManager::instance().config_wpa_supplicant("/etc/wpa_supplicant.conf");
   NetworkManager::instance().begin();
@@ -76,19 +94,60 @@ void setup() {
 
   NetworkSettings::init();
   WebServer::instance().begin();
+#endif
+  log_i("init nfc");
+  {
+    if (nfc_init()) {
+      rfid_device = TYPE_PN5180;
+      Serial.printf("PN5180 MODE\n");
+    } else {
+      Serial1.begin(19200, SERIAL_8N1, 34, 33);
+      rfid_reader.init();
+      rfid_reader.set_cmd_callback([](CU500::cmd_t cmd, uint8_t *data, size_t,
+                                      void *u_data) { rfid_record = 0; },
+                                   nullptr);
+      rfid_record = 0;
+      rfid_device = TYPE_CU500;
+      Serial.printf("CU500 MODE\n");
+    }
+  }
+  log_i("init end");
 }
 
 void loop() {
   SYSTEM::loop();
-  check_network_state();
 
-  do {
-    if (NetworkManager::instance().is_connect() ||
-        NetworkManager::instance().isConnected()) {
-    } else {
+  if (rfid_device == TYPE_CU500) {
+    static unsigned ts = 0;
+    if (rfid_record == 0) {
+      rfid_reader.send_cmd(CU500::CMD_MULT_INVENTORY);
+      rfid_record = millis();
+    } else if (millis() - rfid_record > 200) {
+      rfid_reader.clear();
+      rfid_record = 0;
     }
 
-  } while (0);
+    const auto &new_rfid = rfid_reader.rfid();
+    if (!_latest_rfid_index.equals(new_rfid)) {
+      _latest_rfid_index = new_rfid;
+      if (!_latest_rfid_index.isEmpty()) {
+        Serial.println(_latest_rfid_index.c_str());
+      }
+    }
+  } else if (rfid_device == TYPE_PN5180) {
+    String uid{};
+    if (has_uid(uid)) {
+      Serial.printf("has rfid: %s\n", uid.c_str());
+      Serial.flush();
+      log_n("send package");
+      // send_box_msg("_cobox_scene_" + uid);
+    }
+    update_nfc();
+  }
+
+#if 0
+  check_network_state();
+#endif
 }
 
 bool debug_enable() { return _debug_enable; }

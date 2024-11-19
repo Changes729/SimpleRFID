@@ -19,12 +19,12 @@ constexpr auto DATA_PIN = 15;
 #define ENCONTER_TO_ANGLE(encoder_counter_num)                                 \
   ((encoder_counter_num) / (ENCODER_EDGE / 4))
 
-constexpr auto PN5180_RST = 32;
-constexpr auto PN5180_NSS = 33;
-constexpr auto PN5180_BUSY = 14;
-constexpr auto PN5180_SCK = 12;
-constexpr auto PN5180_MISO = 17;
-constexpr auto PN5180_MOSI = 5;
+constexpr auto PN5180_RST = 5;
+constexpr auto PN5180_NSS = 12;
+constexpr auto PN5180_BUSY = 10;
+constexpr auto PN5180_SCK = 7;
+constexpr auto PN5180_MISO = 9;
+constexpr auto PN5180_MOSI = 11;
 
 constexpr auto MPR121_SDA = 2;
 constexpr auto MPR121_SCL = 4;

@@ -9,6 +9,7 @@
 namespace SYSTEM {
 /* Private define ------------------------------------------------------------*/
 #define network_manager NetworkManager::instance()
+#define SYS_LED 1
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct _task {
@@ -37,6 +38,9 @@ static internal_task _tasks[]{
  * @retval None
  */
 void init() {
+  pinMode(SYS_LED, OUTPUT);
+  digitalWrite(SYS_LED, HIGH);
+
   for (auto &task : _tasks) {
     if (task.interval == 0) {
       task.interval = 1000;
