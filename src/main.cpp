@@ -44,6 +44,7 @@ static IPAddress _debug_ip{0, 0, 0, 0};
 static String _debug_ip_str = _debug_ip.toString();
 static uint32_t _debug_port = 3333;
 static String _latest_rfid_index{};
+static unsigned _latest_ts;
 
 /* Private class -------------------------------------------------------------*/
 static rfid_device_t rfid_device;
@@ -137,11 +138,19 @@ void loop() {
   } else if (rfid_device == TYPE_PN5180) {
     String new_rfid{};
     if (has_uid(new_rfid)) {
-      _latest_rfid_index = new_rfid;
-      if (!_latest_rfid_index.isEmpty()) {
-        Serial.println(_latest_rfid_index.c_str());
+      if (!_latest_rfid_index.equals(new_rfid)) {
+        _latest_rfid_index = new_rfid;
+        if (!_latest_rfid_index.isEmpty()) {
+          analogWrite(4, 128);
+          Serial.println(_latest_rfid_index.c_str());
+          delay(300);
+        }
       }
+      _latest_ts = millis();
+    } else if (millis() - _latest_ts > 300) {
+      _latest_rfid_index = "";
     }
+    analogWrite(4, 0);
     update_nfc();
   }
 
