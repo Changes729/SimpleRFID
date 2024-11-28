@@ -3,7 +3,6 @@
 /* Private include -----------------------------------------------------------*/
 #include "config.h"
 
-#include <NdefMessage.h>
 #include <PN5180.h>
 #include <PN5180ISO15693.h>
 
@@ -137,7 +136,7 @@ void update_nfc() {
 #endif
       int messageStartIndex = 0;
       int messageLength = 0;
-      if (!decodeTlv(readBuffer + 4, messageLength, messageStartIndex)) {
+      if (decodeTlv(readBuffer + 4, messageLength, messageStartIndex)) {
         _current_ndef_msg =
             NdefMessage(readBuffer + 4 + messageStartIndex, messageLength);
       } else {
@@ -275,6 +274,8 @@ bool has_uid(String &out, const char seq) {
 
   return has_uid_;
 }
+
+const NdefMessage &get_ndef_message() { return _current_ndef_msg; }
 
 static void _uid_to_string(String &str) { str.clear(); }
 
