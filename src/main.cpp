@@ -157,28 +157,30 @@ void loop() {
     send_json = (Serial.read() == '\n');
   }
 
-  if (send_json && has_uid()) {
-    String output;
-    JsonDocument json_doc;
-    auto &ndef_msg = get_ndef_message();
-    auto size = ndef_msg.getRecordCount();
-    for (int i = 0; i < size; ++i) {
-      auto record = ndef_msg.getRecord(i);
-      int payload_length = record->getPayloadLength();
-      char buffer[payload_length + 1]{'\0'};
-      memcpy(buffer, record->getPayload(), payload_length);
-      switch (record->getTnf()) {
-      case 2:
-        json_doc[i] = String(buffer);
-        break;
-      case 1: /** NOTE: not support now. https://; plain text; */
-      default:
-        // Serial.println(record->getTnf());
-        // Serial.println(buffer);
-        break;
+  if (send_json) {
+    String output = "null";
+    if (has_uid()) {
+      JsonDocument json_doc;
+      auto &ndef_msg = get_ndef_message();
+      auto size = ndef_msg.getRecordCount();
+      for (int i = 0; i < size; ++i) {
+        auto record = ndef_msg.getRecord(i);
+        int payload_length = record->getPayloadLength();
+        char buffer[payload_length + 1]{'\0'};
+        memcpy(buffer, record->getPayload(), payload_length);
+        switch (record->getTnf()) {
+        case 2:
+          json_doc[i] = String(buffer);
+          break;
+        case 1: /** NOTE: not support now. https://; plain text; */
+        default:
+          // Serial.println(record->getTnf());
+          // Serial.println(buffer);
+          break;
+        }
       }
+      serializeJson(json_doc, output);
     }
-    serializeJson(json_doc, output);
     Serial.println(output);
   }
 #if 0
