@@ -154,7 +154,7 @@ void loop() {
 
   bool send_json = false;
   while (Serial.available()) {
-    send_json = (Serial.read() == '\n');
+    send_json = send_json | (Serial.read() == '\n');
   }
 
   if (send_json) {
